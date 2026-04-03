@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link id="google-font-link" rel="stylesheet" href="">
+  <style>
+    :root { --accent: #5b4ff5; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f5f7; color: #1a1a2e; font-family: 'Inter', sans-serif; transition: all 0.3s; }
+    body.dark { background: #111827; color: #f9fafb; }
+    body.dark .top-bar { background: #1f2937; border-color: #374151; }
+    body.dark .form-panel { background: #1f2937; border-color: #374151; }
+    body.dark .preview-panel { background: #111827; }
+    body.dark .invoice-preview { background: #1f2937; color: #f9fafb; }
+    body.dark .field input, body.dark .field select { background: #111827; border-color: #374151; color: #f9fafb; }
+    body.dark .item-row input { background: #111827; border-color: #374151; color: #f9fafb; }
+    body.dark .divider { border-color: #374151; }
+    body.dark .preview-meta-value { color: #f9fafb; }
+    body.dark .preview-meta-label { color: #6b7280; }
+    body.dark .pill { background: #1f2937; border-color: #374151; color: #9ca3af; }
+    body.dark .preview-table td { border-color: #374151; color: #f9fafb; }
+    body.dark .preview-table tr:nth-child(even) td { background: #273548; }
+    body.dark .preview-table tr:nth-child(odd) td { background: #1f2937; }
+    body.dark .preview-total { color: #f9fafb; }
+    .top-bar { background: white; border-bottom: 1px solid #e8e8e8; padding: 16px 40px; }
+    .top-bar .logo { font-size: 1.2rem; font-weight: 600; }
+    .top-bar .logo span { color: var(--accent); }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 57px); }
+    .form-panel { padding: 32px 40px; background: white; border-right: 1px solid #e8e8e8; overflow-y: auto; }
+    .preview-panel { padding: 32px 40px; background: #f5f5f7; }
+    .panel-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 24px; }
+    .section { margin-bottom: 28px; }
+    .section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 12px; }
+    .field { margin-bottom: 14px; }
+    .field label { font-size: 0.8rem; color: #6b7280; margin-bottom: 5px; display: block; }
+    .field input, .field select { width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; color: #1a1a2e; background: white; outline: none; font-family: inherit; transition: border 0.2s; }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    input[type="color"] { padding: 2px 4px; height: 38px; cursor: pointer; }
+    input[type="file"] { padding: 6px; font-size: 0.85rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pill-group { display: flex; gap: 8px; }
+    .pill { padding: 6px 16px; border-radius: 20px; border: 1.5px solid #e5e7eb; cursor: pointer; font-size: 0.82rem; background: white; color: #6b7280; transition: all 0.2s; }
+    .pill.active { border-color: var(--accent); color: var(--accent); font-weight: 600; background: #f0effe; }
+    .items-header { display: grid; grid-template-columns: 3fr 1fr 1fr auto; gap: 8px; margin-bottom: 6px; }
+    .items-header span { font-size: 0.75rem; color: #9ca3af; font-weight: 500; }
+    .item-row { display: grid; grid-template-columns: 3fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .item-row input { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.88rem; font-family: inherit; color: #1a1a2e; outline: none; background: white; }
+    .btn-add { background: #f0effe; color: var(--accent); margin-top: 8px; padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 500; font-family: inherit; }
+    .btn-danger { background: #fef2f2; color: #ef4444; padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; }
+    .btn-generate { background: var(--accent); color: white; width: 100%; padding: 13px; font-size: 1rem; font-weight: 600; margin-top: 8px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
+    .divider { border: none; border-top: 1px solid #f3f4f6; margin: 20px 0; }
+    .invoice-preview { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
+    .preview-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .preview-brand { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .preview-tag { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; color: #9ca3af; }
+    .preview-divider { border: none; border-top: 2px solid var(--accent); margin: 16px 0; opacity: 0.3; }
+    .preview-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; font-size: 0.82rem; }
+    .preview-meta-label { color: #9ca3af; margin-bottom: 2px; font-size: 0.75rem; }
+    .preview-meta-value { font-weight: 500; color: #1a1a2e; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 16px; }
+    .preview-table th { background: var(--accent); color: white; padding: 8px 10px; text-align: left; font-weight: 500; }
+    .preview-table th:not(:first-child) { text-align: center; }
+    .preview-table td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; }
+    .preview-table td:not(:first-child) { text-align: center; }
+    .preview-table tr:nth-child(even) td { background: #fafafa; }
+    .preview-total { text-align: right; margin-top: 16px; font-size: 0.9rem; }
+    .preview-total-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+    #status { text-align: center; margin-top: 10px; font-size: 0.85rem; color: #6b7280; min-height: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">Invoice<span>Generator</span></div>
+</div>
+
+<div class="layout">
+
+  <div class="form-panel">
+    <p class="panel-title">Create Invoice</p>
+
+    <div class="section">
+      <div class="section-label">Appearance</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Font Color</label>
+          <input type="color" id="fontColor" value="#1a1a2e">
+        </div>
+        <div class="field">
+          <label>Accent Color</label>
+          <input type="color" id="accentColor" value="#5b4ff5"
+            oninput="document.documentElement.style.setProperty('--accent', this.value); updatePreview()">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Font Family</label>
+          <select id="fontFamily" onchange="applyFont(this.value)">
+            <option>Inter</option>
+            <option>Roboto</option>
+            <option>Montserrat</option>
+            <option>Playfair Display</option>
+            <option>Merriweather</option>
+            <option>Courier New</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Brand Style</label>
+          <select id="brandStyle">
+            <option value="B">Bold</option>
+            <option value="I">Italic</option>
+            <option value="BI">Bold + Italic</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Brand Font Size</label>
+          <input type="number" id="brandFontSize" value="26" min="10" max="60">
+        </div>
+        <div class="field">
+          <label>Theme</label>
+          <div class="pill-group">
+            <span class="pill active" onclick="setTheme('light', this)">Light</span>
+            <span class="pill" onclick="setTheme('dark', this)">Dark</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <div class="section-label">Brand & Invoice</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Brand Name</label>
+          <input id="brandName" placeholder="Acme Co." oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Invoice Number</label>
+          <input id="invoiceNo" placeholder="INV-001" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Logo (optional)</label>
+        <input type="file" id="logoFile" accept="image/*">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <div class="section-label">Client Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Client Name</label>
+          <input id="clientName" placeholder="John Doe" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Client Email</label>
+          <input id="clientEmail" placeholder="john@example.com" oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <div class="section-label">Items</div>
+      <div class="items-header">
+        <span>Description</span>
+        <span>Qty</span>
+        <span>Price (₦)</span>
+        <span></span>
+      </div>
+      <div id="items-container"></div>
+      <button class="btn-add" onclick="addItem()">+ Add Item</button>
+    </div>
+
+    <button class="btn-generate" onclick="generateInvoice()">Generate & Download PDF</button>
+    <p id="status"></p>
+  </div>
+
+  <div class="preview-panel">
+    <p class="panel-title">Preview</p>
+    <div class="invoice-preview">
+      <div class="preview-header">
+        <div class="preview-brand" id="prev-brand">Your Brand</div>
+        <div class="preview-tag">INVOICE</div>
+      </div>
+      <hr class="preview-divider">
+      <div class="preview-meta">
+        <div>
+          <div class="preview-meta-label">Billed To</div>
+          <div class="preview-meta-value" id="prev-client">Client Name</div>
+          <div style="color: #9ca3af; font-size: 0.78rem;" id="prev-email">client@email.com</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="preview-meta-label">Invoice No</div>
+          <div class="preview-meta-value" id="prev-invoice-no">INV-001</div>
+          <div class="preview-meta-label" style="margin-top: 8px;">Date</div>
+          <div class="preview-meta-value" id="prev-date"></div>
+        </div>
+      </div>
+      <table class="preview-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="prev-items"></tbody>
+      </table>
+      <div class="preview-total">
+        <span style="color: #6b7280;">Grand Total: </span>
+        <span class="preview-total-amount" id="prev-total">₦0.00</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let items = [];
+
+  const today = new Date();
+  document.getElementById('prev-date').textContent = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  function addItem() {
+    const id = Date.now();
+    items.push({ id, description: '', qty: 1, price: 0 });
+    renderItems();
+    updatePreview();
+  }
+
+  function removeItem(id) {
+    items = items.filter(i => i.id !== id);
+    renderItems();
+    updatePreview();
+  }
+
+  function renderItems() {
+    const c = document.getElementById('items-container');
+    c.innerHTML = items.map((item, idx) => `
+      <div class="item-row">
+        <input placeholder="Service description"
+          oninput="items[${idx}].description=this.value; updatePreview()"
+          value="${item.description}">
+        <input type="number" min="1" value="${item.qty}"
+          oninput="items[${idx}].qty=+this.value; updatePreview()">
+        <input type="number" min="0" step="0.01" value="${item.price}"
+          oninput="items[${idx}].price=+this.value; updatePreview()">
+        <button class="btn-danger" onclick="removeItem(${item.id})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function updatePreview() {
+    document.getElementById('prev-brand').textContent = document.getElementById('brandName').value || 'Your Brand';
+    document.getElementById('prev-client').textContent = document.getElementById('clientName').value || 'Client Name';
+    document.getElementById('prev-email').textContent = document.getElementById('clientEmail').value || 'client@email.com';
+    document.getElementById('prev-invoice-no').textContent = document.getElementById('invoiceNo').value || 'INV-001';
+
+    let grand = 0;
+    const tbody = document.getElementById('prev-items');
+    tbody.innerHTML = items.map(item => {
+      const total = item.qty * item.price;
+      grand += total;
+      return `<tr>
+        <td>${item.description || '-'}</td>
+        <td>${item.qty}</td>
+        <td>₦${item.price.toFixed(2)}</td>
+        <td>₦${total.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('prev-total').textContent = `₦${grand.toFixed(2)}`;
+  }
+
+  function setTheme(theme, el) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }
+
+  function applyFont(font) {
+    const link = document.getElementById('google-font-link');
+    link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}:wght@400;700&display=swap`;
+    document.body.style.fontFamily = `'${font}', sans-serif`;
+  }
+
+  async function generateInvoice() {
+    const status = document.getElementById('status');
+    if (!items.length) { status.textContent = 'Add at least one item.'; return; }
+    status.textContent = 'Generating your invoice...';
+
+    let logo = null;
+    const logoFile = document.getElementById('logoFile').files[0];
+    if (logoFile) {
+      logo = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(logoFile);
+      });
+    }
+
+    const payload = {
+      brandName:     document.getElementById('brandName').value || 'My Brand',
+      invoiceNo:     document.getElementById('invoiceNo').value || 'INV-001',
+      client: {
+        name:  document.getElementById('clientName').value,
+        email: document.getElementById('clientEmail').value
+      },
+      items,
+      fontColor:     document.getElementById('fontColor').value,
+      accentColor:   document.getElementById('accentColor').value,
+      fontFamily:    document.getElementById('fontFamily').value,
+      theme:         document.body.classList.contains('dark') ? 'dark' : 'light',
+      brandStyle:    document.getElementById('brandStyle').value,
+      brandFontSize: +document.getElementById('brandFontSize').value,
+      logo
+    };
+
+    try {
+      const res = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Server error');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${payload.invoiceNo}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      status.textContent = 'Invoice downloaded!';
+    } catch (e) {
+      status.textContent = 'Something went wrong. Try again.';
+    }
+  }
+
+  addItem();
+  applyFont('Inter');
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.vscode/
+dejavu-fonts-ttf-2.37/
+*.egg-info/
+dist/
+build/
